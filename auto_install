@@ -1,1 +1,122 @@
-#Alignedlayer
+#!/bin/bash
+clear
+
+if [[ ! -f "$HOME/.bash_profile" ]]; then
+    touch "$HOME/.bash_profile"
+fi
+
+if [ -f "$HOME/.bash_profile" ]; then
+    source $HOME/.bash_profile
+fi
+
+logo_nodesync(){
+
+clear
+
+ cat << "EOF"
+=========================================================================
+     _   _           _       ____
+    | \ | |         | |     / ___|
+    |  \| | ___   __| | ___| (__  _   _ ___    __   _____  ___  ___
+    |     |/ _ \ / _  |/ __\\__ \| | | |  _ \ / _| |_   _|/ _ \|  _ \
+    | |\  | (_) | (_) | /o_ ___) | |_| | | | | (_ _  | | | (_) | |_) |
+    |_| \_|\___/ \____|\___|____/ \__  |_| |_|\__(_) |_|  \___/|  _ /
+                                    _/ |                       | |
+                                   |__/                        |_|
+
+=========================================================================
+             Developed by: NodeSync.Top
+             Twitter: https://twitter.com/nodesync_top
+             Telegram: https://t.me/nodesync_top
+=========================================================================
+EOF
+
+}
+
+logo_nodesync;
+
+
+echo "===========Aligned Layer Install Easy======= " && sleep 1
+
+read -p "Do you want run node Aligned Layer ? (y/n): " choice
+
+if [ "$choice" == "y" ]; then
+
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install make curl git wget htop tmux build-essential jq make lz4 gcc unzip -y
+
+#Install GO
+ver="1.21.5"
+wget "https://golang.org/dl/go$ver.linux-amd64.tar.gz"
+sudo rm -rf /usr/local/go
+sudo tar -C /usr/local -xzf "go$ver.linux-amd64.tar.gz"
+rm "go$ver.linux-amd64.tar.gz"
+echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >> $HOME/.bash_profile
+source $HOME/.bash_profile
+go version
+
+cd $HOME
+wget https://github.com/yetanotherco/aligned_layer_tendermint/releases/download/v0.1.0/alignedlayerd
+chmod +x alignedlayerd
+sudo mv alignedlayerd /usr/local/bin/
+cd $HOME
+alignedlayerd version
+NODE_HOME=$HOME/.alignedlayer
+CHAIN_BINARY=alignedlayerd
+CHAIN_ID=alignedlayer
+PEER_ADDRESSES=("91.107.239.79" "116.203.81.174" "88.99.174.203" "128.140.3.188")
+$CHAIN_BINARY comet unsafe-reset-all
+$CHAIN_BINARY init NodeName \
+    --chain-id $CHAIN_ID --overwrite
+
+for ADDR in "${PEER_ADDRESSES[@]}"; do
+    GENESIS=$(curl -f "$ADDR:26657/genesis" | jq '.result.genesis')
+    if [ -n "$GENESIS" ]; then
+        echo "$GENESIS" > $NODE_HOME/config/genesis.json;
+        break;
+    fi
+done
+
+for ADDR in "${PEER_ADDRESSES[@]}"; do
+    PEER_ID=$(curl -s "$ADDR:26657/status" | jq -r '.result.node_info.id')
+    if [ -n "$PEER_ID" ]; then
+        PEERS+=("$PEER_ID@$ADDR:26656")
+    fi
+done
+
+PEER_LIST=$(IFS=,; echo "${PEERS[*]}")
+
+$CHAIN_BINARY config set config p2p.persistent_peers "$PEER_LIST" --skip-validate
+$CHAIN_BINARY config set config rpc.laddr "tcp://0.0.0.0:26657" --skip-validate
+
+
+sudo tee /etc/systemd/system/alignedlayerd.service > /dev/null <<EOF
+[Unit]
+Description=alignedlayerd
+After=network-online.target
+[Service]
+User=root
+ExecStart=$(which alignedlayerd) start
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+[Install]
+WantedBy=multi-user.target
+EOF
+cd $HOME
+
+cd $HOME
+sudo systemctl daemon-reload
+sudo systemctl enable alignedlayerd
+sudo systemctl restart alignedlayerd
+sudo journalctl -u alignedlayerd -f --no-hostname -o cat
+echo "===================Install Success==================="
+echo -e "\e[1;32m Check status: \e[0m\e[1;36m${CYAN} sudo systemctl status alignedlayerd ${NC}\e[0m"
+echo -e "\e[1;32m Check logs: \e[0m\e[1;36m${CYAN} journalctl -u alignedlayerd -f --no-hostname -o cat ${NC}\e[0m"
+else
+
+echo "Not installed"
+
+fi
+
