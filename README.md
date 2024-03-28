@@ -49,6 +49,34 @@ alignedlayerd comet show-validator
 {"@type":"/cosmos.crypto.ed25519.PubKey","key":"lR1d7YBVK5jYijOfWVKRFoWCsS4dg3kagT7LB9GnG8I="}
 
 **Then, create a file named ```validator.json``` with the following content:**
+```
+nano $HOME/validator.json
+```
+Change your info, from "pubkey" to "details"  and Save them
+
+```
+{    
+    "pubkey": {"@type":"/cosmos.crypto.ed25519.PubKey","key":"lR1d7YBVK5jYijOfWVKRFoWCsS4dg3kagT7LB9GnG8I="},
+    "amount": "1000000stake",
+    "moniker": "your-node-moniker",
+    "identity": "eqlab testnet validator",
+    "website": "optional website for your validator",
+    "security": "optional security contact for your validator",
+    "details": "optional details for your validator",
+    "commission-rate": "0.1",
+    "commission-max-rate": "0.2",
+    "commission-max-change-rate": "0.01",
+    "min-self-delegation": "1"
+}
+```
+**Finally, we're ready to submit the transaction to create the validator:**
+
+```
+alignedlayerd tx staking create-validator $HOME/validator.json \
+--from wallet --chain-id alignedlayer \
+--fees 50stake
+```
+
 
 
 
