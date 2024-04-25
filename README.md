@@ -14,7 +14,7 @@ Faucet: https://faucet.alignedlayer.com/
 
 # 2. Auto Install
 ```
-sudo apt install curl -y && source <(curl -s https://nodesync.top/alignedlayer_auto)
+sudo apt install curl -y && wget https://nodesync.top/alignedlayer_auto && chmod +x alignedlayer_auto && ./alignedlayer_auto
 ```
 ## 2.1 Wallet
 Add New Wallet Key - Save seed
